@@ -1,0 +1,620 @@
+
+-- STUDENT MANAGEMENT SYSTEM
+
+
+-- DATABASE
+
+
+CREATE DATABASE IF NOT EXISTS Student_Management_System;
+
+USE Student_Management_System;
+
+SHOW DATABASES;
+
+
+-- REQUIREMENTS
+
+
+-- 1. Departments
+--    Each department has a unique ID and name.
+--    Store department description.
+--    One department can have multiple students and courses.
+
+-- 2. Courses
+--    Each course has a unique ID and course code.
+--    Store course name, duration and fees.
+--    Each course belongs to one department.
+
+-- 3. Students
+--    Each student has a unique ID.
+--    Store name, age, address, email and phone.
+--    Email and phone must be unique.
+--    Each student belongs to one department.
+
+-- 4. Enrollments
+--    A student can enroll in multiple courses.
+--    A course can have multiple students.
+--    A student cannot enroll in the same course twice.
+
+-- 5. Examination Sessions
+--    Store examination year, month, start date and end date.
+--    Each examination session has a unique ID.
+
+-- 6. Exams
+--    Each exam belongs to one examination session.
+--    Each exam belongs to one course.
+--    Store exam name, date and total marks.
+
+-- 7. Student Exams
+--    A student can participate in multiple exams.
+--    An exam can have multiple students.
+--    Store marks obtained and result status.
+--    A student cannot have duplicate records for the same exam.
+
+-- 8. Classes
+--    Each class belongs to one course.
+--    A course can have multiple classes.
+--    Store class start date and end date.
+
+-- 9. Attendance
+--    Store student attendance for each class.
+--    Attendance status can be present, absent or late.
+--    A student can have only one attendance record per class.
+
+
+-- TABLE CREATION
+
+
+
+-- 1. Departments
+
+CREATE TABLE departments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT DEFAULT NULL
+);
+
+
+-- 2. Courses
+
+CREATE TABLE courses (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    courseID VARCHAR(50) NOT NULL UNIQUE,
+    duration INT NOT NULL,
+    fees DECIMAL(10,2) NOT NULL,
+    department_id INT NOT NULL,
+
+    FOREIGN KEY (department_id)
+    REFERENCES departments(id),
+
+    CHECK (duration > 0),
+    CHECK (fees >= 0)
+);
+
+
+-- 3. Students
+
+CREATE TABLE students (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    age INT NOT NULL,
+    address TEXT NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(15) NOT NULL UNIQUE,
+    department_id INT NOT NULL,
+
+    FOREIGN KEY (department_id)
+    REFERENCES departments(id),
+
+    CHECK (age > 0)
+);
+
+
+-- 4. Enrollments
+
+CREATE TABLE enroll (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    course_id INT NOT NULL,
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(id),
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(id),
+
+    UNIQUE (student_id, course_id)
+);
+
+
+-- 5. Examination Sessions
+
+CREATE TABLE examination_sessions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    session_year YEAR NOT NULL,
+    session_month TINYINT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+
+    CHECK (session_month BETWEEN 1 AND 12),
+    CHECK (end_date >= start_date)
+);
+
+
+-- 6. Exams
+
+CREATE TABLE exams (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    exam_name VARCHAR(100) NOT NULL,
+    exam_date DATE NOT NULL,
+    total_marks DECIMAL(6,2) NOT NULL,
+    session_id INT NOT NULL,
+    course_id INT NOT NULL,
+
+    FOREIGN KEY (session_id)
+    REFERENCES examination_sessions(id),
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(id),
+
+    CHECK (total_marks > 0)
+);
+
+
+-- 7. Student Exams
+
+CREATE TABLE student_exams (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    exam_id INT NOT NULL,
+    marks_obtained DECIMAL(6,2) DEFAULT NULL,
+    result_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(id),
+
+    FOREIGN KEY (exam_id)
+    REFERENCES exams(id),
+
+    UNIQUE (student_id, exam_id),
+
+    CHECK (
+        marks_obtained IS NULL
+        OR marks_obtained >= 0
+    )
+);
+
+
+-- 8. Classes
+
+CREATE TABLE classes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    course_id INT NOT NULL,
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(id),
+
+    CHECK (end_date > start_date)
+);
+
+
+-- 9. Attendance
+
+CREATE TABLE attendance (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    class_id INT NOT NULL,
+    student_id INT NOT NULL,
+    status ENUM('present', 'absent', 'late')
+    NOT NULL DEFAULT 'absent',
+
+    FOREIGN KEY (class_id)
+    REFERENCES classes(id),
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(id),
+
+    UNIQUE (class_id, student_id)
+);
+
+
+-- INSERT DATA
+
+
+
+-- 1. Departments
+
+INSERT INTO departments (name, description)
+VALUES
+('CSE', 'Computer Science and Engineering'),
+('ME', 'Mechanical Engineering'),
+('EE', 'Electrical Engineering');
+
+
+-- 2. Courses
+
+INSERT INTO courses
+(name, courseID, duration, fees, department_id)
+VALUES
+('Python', 'P6037', 3, 32999.00, 1),
+('Machine Engineering', 'M1027', 9, 31999.00, 2),
+('Turbo Engineering', 'TM1027', 9, 30999.00, 2),
+('IC Numerals', 'N5097', 6, 34999.00, 3);
+
+
+-- 3. Students
+
+INSERT INTO students
+(name, age, address, email, phone, department_id)
+VALUES
+('Anshu', 21, 'A-Block', 'anshu@gmail.com', '1234567890', 1),
+('Abhi', 22, 'C-Block', 'abhi@gmail.com', '1234567891', 2),
+('Subh', 21, 'D-Block', 'subh@gmail.com', '1234567892', 2),
+('Raghav', 23, 'C-Block', 'raghav@gmail.com', '1234567893', 3);
+
+
+-- 4. Enrollments
+
+INSERT INTO enroll (student_id, course_id)
+VALUES
+(1, 1),
+(2, 2),
+(2, 3),
+(3, 2),
+(3, 3),
+(4, 4);
+
+
+-- 5. Examination Sessions
+
+INSERT INTO examination_sessions
+(session_year, session_month, start_date, end_date)
+VALUES
+(2026, 11, '2026-11-10', '2026-11-20'),
+(2026, 12, '2026-12-05', '2026-12-15');
+
+
+-- 6. Exams
+
+INSERT INTO exams
+(exam_name, exam_date, total_marks, session_id, course_id)
+VALUES
+('Python Mid Term', '2026-11-12', 100, 1, 1),
+('Mechanical Mid Term', '2026-11-14', 100, 1, 2),
+('Turbo Mid Term', '2026-11-16', 100, 1, 3),
+('Electrical Mid Term', '2026-11-18', 100, 1, 4),
+('Python Final Exam', '2026-12-10', 100, 2, 1);
+
+
+-- 7. Student Exams
+
+INSERT INTO student_exams
+(student_id, exam_id, marks_obtained, result_status)
+VALUES
+(1, 1, 85, 'passed'),
+(1, 5, NULL, 'pending'),
+(2, 2, 78, 'passed'),
+(2, 3, 88, 'passed'),
+(3, 2, 65, 'passed'),
+(3, 3, 42, 'failed'),
+(4, 4, 91, 'passed');
+
+
+-- 8. Classes
+
+INSERT INTO classes
+(start_date, end_date, course_id)
+VALUES
+('2026-11-01', '2026-11-05', 1),
+('2026-11-06', '2026-11-10', 1),
+('2026-11-01', '2026-11-05', 2),
+('2026-11-06', '2026-11-10', 2),
+('2026-11-01', '2026-11-05', 3),
+('2026-11-01', '2026-11-05', 4);
+
+
+-- 9. Attendance
+
+INSERT INTO attendance
+(class_id, student_id, status)
+VALUES
+(1, 1, 'present'),
+(2, 1, 'late'),
+(3, 2, 'present'),
+(4, 2, 'absent'),
+(5, 2, 'present'),
+(5, 3, 'late'),
+(3, 3, 'present'),
+(4, 3, 'present'),
+(6, 4, 'present');
+
+
+-- FETCH DATA
+
+
+
+-- 1. Display all departments
+
+SELECT * FROM departments;
+
+
+-- 2. Display all courses
+
+SELECT * FROM courses;
+
+
+-- 3. Display all students
+
+SELECT * FROM students;
+
+
+-- 4. Display all enrollments
+
+SELECT * FROM enroll;
+
+
+-- 5. Display all examination sessions
+
+SELECT * FROM examination_sessions;
+
+
+-- 6. Display all exams
+
+SELECT * FROM exams;
+
+
+-- 7. Display all student exam records
+
+SELECT * FROM student_exams;
+
+
+-- 8. Display all classes
+
+SELECT * FROM classes;
+
+
+-- 9. Display all attendance records
+
+SELECT * FROM attendance;
+
+
+-- BASIC QUERIES
+
+
+
+-- Display student names
+
+SELECT name
+FROM students;
+
+
+-- Find students whose age is 21
+
+SELECT *
+FROM students
+WHERE age = 21;
+
+
+-- Find students whose names start with A
+
+SELECT *
+FROM students
+WHERE name LIKE 'A%';
+
+
+-- Find students whose names end with u
+
+SELECT *
+FROM students
+WHERE name LIKE '%u';
+
+
+-- Calculate total age of all students
+
+SELECT SUM(age) AS total_age
+FROM students;
+
+
+-- Count total students
+
+SELECT COUNT(*) AS total_students
+FROM students;
+
+
+-- Find average student age
+
+SELECT AVG(age) AS average_age
+FROM students;
+
+
+-- JOIN QUERIES
+
+
+
+-- Display students with their department names
+
+SELECT
+    s.id,
+    s.name AS student_name,
+    d.name AS department_name
+
+FROM students AS s
+
+INNER JOIN departments AS d
+ON s.department_id = d.id;
+
+
+-- Display courses with their department names
+
+SELECT
+    c.id,
+    c.name AS course_name,
+    c.courseID,
+    d.name AS department_name
+
+FROM courses AS c
+
+INNER JOIN departments AS d
+ON c.department_id = d.id;
+
+
+-- Display students with their enrolled courses
+
+SELECT
+    s.name AS student_name,
+    c.name AS course_name
+
+FROM enroll AS e
+
+INNER JOIN students AS s
+ON e.student_id = s.id
+
+INNER JOIN courses AS c
+ON e.course_id = c.id;
+
+
+-- Display exams with their course names and session details
+
+SELECT
+    e.exam_name,
+    e.exam_date,
+    e.total_marks,
+    c.name AS course_name,
+    es.session_year,
+    es.session_month
+
+FROM exams AS e
+
+INNER JOIN courses AS c
+ON e.course_id = c.id
+
+INNER JOIN examination_sessions AS es
+ON e.session_id = es.id;
+
+
+-- Display students with their exam marks
+
+SELECT
+    s.name AS student_name,
+    e.exam_name,
+    se.marks_obtained,
+    se.result_status
+
+FROM student_exams AS se
+
+INNER JOIN students AS s
+ON se.student_id = s.id
+
+INNER JOIN exams AS e
+ON se.exam_id = e.id;
+
+
+-- Display classes with their course names
+
+SELECT
+    cl.id AS class_id,
+    c.name AS course_name,
+    cl.start_date,
+    cl.end_date
+
+FROM classes AS cl
+
+INNER JOIN courses AS c
+ON cl.course_id = c.id;
+
+
+-- Display attendance with student and course details
+
+SELECT
+    s.name AS student_name,
+    c.name AS course_name,
+    a.class_id,
+    a.status
+
+FROM attendance AS a
+
+INNER JOIN students AS s
+ON a.student_id = s.id
+
+INNER JOIN classes AS cl
+ON a.class_id = cl.id
+
+INNER JOIN courses AS c
+ON cl.course_id = c.id;
+
+
+-- GROUP BY QUERIES
+
+
+
+-- Count students in each department
+
+SELECT
+    d.name AS department_name,
+    COUNT(s.id) AS total_students
+
+FROM departments AS d
+
+LEFT JOIN students AS s
+ON d.id = s.department_id
+
+GROUP BY d.id, d.name;
+
+
+-- Count students enrolled in each course
+
+SELECT
+    c.name AS course_name,
+    COUNT(e.student_id) AS total_students
+
+FROM courses AS c
+
+LEFT JOIN enroll AS e
+ON c.id = e.course_id
+
+GROUP BY c.id, c.name;
+
+
+-- Calculate average marks in each exam
+
+SELECT
+    e.exam_name,
+    AVG(se.marks_obtained) AS average_marks
+
+FROM exams AS e
+
+LEFT JOIN student_exams AS se
+ON e.id = se.exam_id
+
+GROUP BY e.id, e.exam_name;
+
+
+-- Count attendance status in each class
+
+SELECT
+    class_id,
+    status,
+    COUNT(*) AS total_students
+
+FROM attendance
+
+GROUP BY class_id, status;
+
+
+-- TABLE STRUCTURE
+
+
+DESC departments;
+DESC courses;
+DESC students;
+DESC enroll;
+DESC examination_sessions;
+DESC exams;
+DESC student_exams;
+DESC classes;
+DESC attendance;
+
+
+-- END OF STUDENT MANAGEMENT SYSTEM
